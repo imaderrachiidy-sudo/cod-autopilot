@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Démo interactive COD Autopilot : confirmation WhatsApp, relances, alertes équipe et fidélité pour boutiques COD.">
+<meta property="og:title" content="COD Autopilot · Démo interactive">
+<meta property="og:description" content="Testez vous-même : choisissez un pack, lancez un scénario et regardez votre boutique COD tourner toute seule.">
+<title>COD Autopilot Démo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+/* Layout: navy command bar, then a three-zone workbench (scenarios · phone · order sheet), then gains calculator. Single committed look. */
+:root{
+  --navy:#0d1626; --navy-2:#16243a; --ink:#0d1626; --ink-2:#3d5470; --muted:#5d6f86;
+  --paper:#f3f6fa; --card:#ffffff; --line:#d9e1ec; --green:#1f9d55; --green-soft:#e5f6ec;
+  --wa-bg:#0b141a; --wa-in:#202c33; --wa-out:#005c4b; --wa-text:#e9edef; --wa-meta:#8fa3ad;
+  --amber:#b77400; --amber-soft:#fdf0d9; --red:#b42318; --red-soft:#fde8e7; --blue:#1d5fa8; --blue-soft:#e3eefb;
+  --display:'Space Grotesk',Inter,system-ui,sans-serif; --body:Inter,system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #5aa7ee;outline-offset:2px}
+.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.bar{background:var(--navy);color:#fff}
+header.bar .wrap{padding-block:22px 18px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;flex-direction:column;gap:4px}
+.brand h1{margin:0;font-family:var(--display);font-size:30px;letter-spacing:-.01em;text-wrap:balance}
+.brand h1 span{color:#25D366}
+.brand p{margin:0;color:#b7c4d6;font-size:14px}
+.test{display:inline-block;background:#24395a;color:#cfe0f3;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;margin-left:8px;vertical-align:middle}
+.packs{display:flex;gap:6px;background:#0a1220;border:1px solid #22324a;border-radius:14px;padding:5px;flex-wrap:wrap}
+.packs button{background:transparent;color:#cfe0f3;border:0;border-radius:10px;padding:9px 16px;font-weight:600;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:118px}
+.packs button small{font-weight:500;color:#8fa3bd;font-size:12px}
+.packs button[aria-pressed="true"]{background:#fff;color:var(--navy)}
+.packs button[aria-pressed="true"] small{color:var(--ink-2)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-block:18px 4px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi b{display:block;font-family:var(--display);font-size:28px;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:13px}
+.bench{display:grid;grid-template-columns:300px minmax(0,380px) minmax(0,1fr);gap:18px;padding-block:16px 28px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;min-width:0}
+.panel h2{margin:0 0 4px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.panel .hint{margin:0 0 12px;color:var(--muted);font-size:13px}
+.scn{display:flex;flex-direction:column;gap:8px}
+.scn button{text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 12px;display:flex;flex-direction:column;gap:3px;color:var(--ink)}
+.scn button:hover:not([disabled]){border-color:#9fb6d3;background:#eef3f9}
+.scn button strong{font-size:14.5px}
+.scn button .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.tag{border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:600;background:#e8eef7;color:var(--ink-2)}
+.tag.c{background:var(--green-soft);color:#11683a}.tag.p{background:var(--navy);color:#fff}
+.soon{display:inline-flex;align-items:center;gap:4px;color:var(--amber);font-weight:600}
+.soon::before{content:"";width:8px;height:8px;border-radius:4px;background:#e0a100}
+.scn button[disabled]{opacity:.55;cursor:not-allowed}
+.scn .lock{font-size:12px;color:var(--muted)}
+.reset{margin-top:10px;background:none;border:1px dashed var(--line);border-radius:10px;padding:8px;color:var(--ink-2);width:100%}
+/* phone */
+.phone{background:var(--wa-bg);border-radius:30px;border:10px solid #2a3442;overflow:hidden;display:flex;flex-direction:column;height:640px}
+.wahead{background:#202c33;color:var(--wa-text);display:flex;align-items:center;gap:10px;padding:12px 14px}
+.wahead .av{width:36px;height:36px;border-radius:18px;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.wahead small{display:block;color:var(--wa-meta);font-size:12px}
+.wahead .clock{margin-left:auto;font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--wa-meta);text-align:right}
+.chat{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:8px}
+.b{max-width:86%;padding:9px 11px 18px;border-radius:12px;color:var(--wa-text);font-size:14px;line-height:1.38;white-space:pre-wrap;position:relative;animation:pop .25s ease-out}
+.b{min-width:84px}
+.b.in{background:var(--wa-in);align-self:flex-start;border-top-left-radius:3px}
+.b.out{background:var(--wa-out);align-self:flex-end;border-top-right-radius:3px}
+.b time{position:absolute;right:9px;bottom:4px;font-size:11px;color:var(--wa-meta)}
+.sys{align-self:center;background:#182229;color:var(--wa-meta);font-size:12px;border-radius:8px;padding:5px 10px;text-align:center}
+.typing{align-self:flex-start;background:var(--wa-in);color:var(--wa-meta);border-radius:12px;padding:8px 14px;letter-spacing:3px}
+.reply{background:#111b21;border-top:1px solid #22313f;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.reply[hidden]{display:none}
+.reply p{margin:0;color:var(--wa-meta);font-size:12px}
+.reply .opts{display:flex;flex-wrap:wrap;gap:6px}
+.reply button{background:#2a3942;color:var(--wa-text);border:0;border-radius:18px;padding:8px 12px;font-size:13.5px}
+.reply button:hover{background:#34454f}
+.empty{margin:auto;color:var(--wa-meta);text-align:center;font-size:13.5px;max-width:240px}
+@keyframes pop{from{transform:translateY(6px);opacity:.3}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.b{animation:none}}
+/* right */
+.right{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sheetwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+th{background:#eef2f7;color:var(--ink-2);text-align:left;font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #eef1f5;vertical-align:top;font-variant-numeric:tabular-nums}
+tr.flash td{animation:flash 1.4s ease-out}
+@keyframes flash{0%{background:#fff3c4}100%{background:transparent}}
+.st{display:inline-block;border-radius:7px;padding:2px 8px;font-weight:600;font-size:12.5px;white-space:nowrap}
+.st.wait{background:var(--blue-soft);color:var(--blue)}.st.ok{background:var(--green-soft);color:#11683a}
+.st.call{background:var(--amber-soft);color:#8a5200}.st.bad{background:var(--red-soft);color:var(--red)}.st.ship{background:#ece8fb;color:#4b3aa8}
+.feed{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto}
+.ev{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:9px 11px;font-size:13.5px;background:var(--card)}
+.ev b{display:block;font-size:13.5px}
+.ev small{color:var(--muted)}
+.ev.mail{border-left-color:#e0a100}.ev.sys2{border-left-color:#9fb6d3}.ev.ai{border-left-color:#4b3aa8}.ev.rep{border-left-color:var(--green)}
+.ai-box{margin-top:6px;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px}
+.ai-box dt{color:var(--muted)}.ai-box dd{margin:0;font-weight:600}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+/* gains */
+.gains{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;margin-bottom:28px}
+.gains h2{margin:0 0 6px;font-family:var(--display);font-size:24px}
+.field{display:flex;flex-direction:column;gap:4px;margin-top:14px}
+.field label{font-weight:600;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-variant-numeric:tabular-nums;color:var(--green)}
+.field input[type=range]{width:100%;accent-color:var(--green)}
+.field small{color:var(--muted)}
+.result{background:var(--navy);color:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;justify-content:center}
+.result div b{display:block;font-family:var(--display);font-size:38px;font-variant-numeric:tabular-nums;color:#25D366}
+.result div span{color:#b7c4d6}
+.result p{margin:0;font-size:12.5px;color:#9fb1c8}
+footer.cta{background:var(--navy);color:#fff}
+footer.cta .wrap{padding-block:24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+footer.cta strong{font-family:var(--display);font-size:22px}
+footer.cta p{margin:2px 0 0;color:#b7c4d6}
+.pill{background:#25D366;color:#06281a;font-weight:700;border-radius:999px;padding:12px 20px;user-select:all}
+@media (max-width:1100px){.bench{grid-template-columns:minmax(0,1fr) minmax(0,380px)}.right{grid-column:1/-1}}
+@media (max-width:760px){.bench{grid-template-columns:minmax(0,1fr)}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two,.gains{grid-template-columns:minmax(0,1fr)}.phone{height:560px}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand">
+      <h1>COD <span>Autopilot</span> <span class="test">Démo · données de test</span></h1>
+      <p>Choisissez un pack, lancez un scénario et regardez la boutique tourner toute seule.</p>
+    </div>
+    <div class="packs" role="group" aria-label="Choisir le pack">
+      <button id="pk-e" data-pack="1" aria-pressed="false">Essentiel<small>2 500 MAD + 400/mois</small></button>
+      <button id="pk-c" data-pack="2" aria-pressed="true">Complet<small>4 500 MAD + 700/mois</small></button>
+      <button id="pk-p" data-pack="3" aria-pressed="false">Pro<small>8 000 MAD + 1 300/mois</small></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="kpis" aria-label="Compteurs de la démo">
+    <div class="kpi"><b id="k-orders">0</b><span>Commandes reçues</span></div>
+    <div class="kpi"><b id="k-auto">0</b><span>Confirmées sans appel</span></div>
+    <div class="kpi"><b id="k-calls">0</b><span>Appels évités à l'équipe</span></div>
+    <div class="kpi"><b id="k-points">0</b><span>Points fidélité crédités</span></div>
+  </section>
+
+  <section class="bench">
+    <div class="panel">
+      <h2>Scénarios</h2>
+      <p class="hint">Chaque bouton joue une situation réelle d'une boutique COD.</p>
+      <div class="scn" id="scenarios"></div>
+      <button class="reset" id="reset">Remettre la démo à zéro</button>
+    </div>
+
+    <div>
+      <div class="phone" aria-label="Téléphone du client, WhatsApp">
+        <div class="wahead"><div class="av">MB</div><div><span>Ma Boutique</span><small>WhatsApp · envoi automatique</small></div><div class="clock" id="clock">Lun. 14:32</div></div>
+        <div class="chat" id="chat" aria-live="polite"><p class="empty">Lancez un scénario à gauche : le message du client apparaît ici.</p></div>
+        <div class="reply" id="reply" hidden><p>Vous jouez le client. Il répond :</p><div class="opts" id="opts"></div></div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <h2>Google Sheets · Commandes</h2>
+        <p class="hint">La feuille se met à jour toute seule, sans saisie.</p>
+        <div class="sheetwrap"><table><thead><tr><th>N°</th><th>Client</th><th>Produit</th><th>Total</th><th>État</th><th>Points</th></tr></thead><tbody id="rows"></tbody></table></div>
+      </div>
+      <div class="two">
+        <div class="panel"><h2>Ce que voit l'équipe</h2><p class="hint">Alertes email et décisions du système.</p><div class="feed" id="feed"></div></div>
+        <div class="panel"><h2>Rapport du matin</h2><p class="hint">Envoyé chaque jour au gérant <span class="soon">en lancement</span></p><div id="report"><p class="hint">Lancez le scénario « Rapport du matin ».</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="gains" aria-labelledby="g-t">
+    <div>
+      <h2 id="g-t">Ce que ça vous fait gagner</h2>
+      <p class="hint">Mettez vos propres chiffres. Le calcul reste une estimation.</p>
+      <div class="field"><label for="g-orders">Commandes par jour <output id="o-orders">40</output></label><input type="range" id="g-orders" min="5" max="300" step="5" value="40"></div>
+      <div class="field"><label for="g-min">Minutes par confirmation manuelle <output id="o-min">3</output></label><input type="range" id="g-min" min="1" max="8" step="0.5" value="3"></div>
+      <div class="field"><label for="g-share">Part confirmée sans appel <output id="o-share">60 %</output></label><input type="range" id="g-share" min="20" max="90" step="5" value="60"><small>Hypothèse : à vérifier avec vos chiffres après 2 semaines.</small></div>
+    </div>
+    <div class="result" aria-live="polite">
+      <div><b id="r-calls">720</b><span>appels de confirmation évités par mois</span></div>
+      <div><b id="r-hours">36 h</b><span>de travail libérées par mois</span></div>
+      <p>Calcul : commandes × 30 jours × part sans appel, puis × minutes par appel. Hors gains sur les retours évités.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="cta">
+  <div class="wrap">
+    <div><strong>Imad Errachidi · COD Autopilot</strong><p>Automatisation n8n &amp; IA pour e-commerce COD · FR · ES · AR · EN</p></div>
+    <div class="pill">WhatsApp +212 775 140 880</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const PACK_NAME={1:'Essentiel',2:'Complet',3:'Pro'};
+const CLIENTS=[
+ {n:'Sara',v:'Casablanca',p:'Coffret parfum d\'ambiance',t:249,ar:'DIFFUSEUR: FLEUR D ORANGER'},
+ {n:'Youssef',v:'Rabat',p:'Diffuseur + 2 sprays',t:299,ar:'DIFFUSEUR: AMBER | SPRAY 1: VANILLE'},
+ {n:'Nadia',v:'Tanger',p:'Huile à brûler',t:149,ar:''},
+ {n:'Omar',v:'Marrakech',p:'Coffret parfum d\'ambiance',t:249,ar:'DIFFUSEUR: JASMIN'},
+ {n:'Imane',v:'Fès',p:'Pack 3 sprays',t:229,ar:'SPRAY 1: OUD'},
+ {n:'Karim',v:'Agadir',p:'Diffuseur + 2 sprays',t:299,ar:'DIFFUSEUR: VANILLE | SPRAY 1: AMBER'}
+];
+const SCN=[
+ {id:'new',t:'Nouvelle commande',d:'WhatsApp de confirmation, le client répond.',pack:1},
+ {id:'fraud',t:'Commande suspecte',d:'Client avec retours passés ou numéro faux.',pack:2,soon:1},
+ {id:'fail',t:'Livraison échouée',d:'Le système relance pour sauver le colis.',pack:2,soon:1},
+ {id:'report',t:'Rapport du matin',d:'Le gérant reçoit ses chiffres.',pack:2,soon:1},
+ {id:'darija',t:'Message en darija',d:'L\'IA comprend et met à jour la commande.',pack:3,soon:1},
+ {id:'track',t:'Suivi de livraison + avis',d:'Le client est informé jusqu\'à la livraison.',pack:3,soon:1}
+];
+let pack=2, orders=[], seq=1046, ci=0, k={orders:0,auto:0,calls:0,points:0}, mins=14*60+32, day=0, busy=false;
+const DAYS=['Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.','Dim.'];
+
+function clock(){const h=Math.floor(mins/60)%24,m=mins%60;$('#clock').textContent=DAYS[day%7]+' '+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');}
+function adv(m){mins+=m;while(mins>=1440){mins-=1440;day++;}clock();}
+function hm(){return $('#clock').textContent.split(' ')[1];}
+function kpi(){for(const x in k)$('#k-'+x).textContent=k[x];}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function md(s){return esc(s).replace(/\*(\d)\*/g,'<b>$1</b>');}
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function clearChat(){$('#chat').innerHTML='';hideReply();}
+function sys(txt){const e=document.createElement('div');e.className='sys';e.textContent=txt;$('#chat').appendChild(e);scroll();}
+async function bubble(txt,dir){
+  if(dir==='in'){const t=document.createElement('div');t.className='typing';t.textContent='•••';$('#chat').appendChild(t);scroll();await wait(700);t.remove();}
+  const b=document.createElement('div');b.className='b '+dir;b.innerHTML=md(txt)+'<time>'+hm()+(dir==='out'?' ✓✓':'')+'</time>';$('#chat').appendChild(b);scroll();
+}
+function scroll(){const c=$('#chat');c.scrollTop=c.scrollHeight;}
+function hideReply(){$('#reply').hidden=true;$('#opts').innerHTML='';}
+function ask(options){return new Promise(res=>{$('#opts').innerHTML='';options.forEach(o=>{const b=document.createElement('button');b.textContent=o.l;b.addEventListener('click',()=>{hideReply();res(o.v);});$('#opts').appendChild(b);});$('#reply').hidden=false;$('#opts button')?.focus();});}
+
+function feed(cls,title,body,extra){const e=document.createElement('div');e.className='ev '+cls;e.innerHTML='<b>'+esc(title)+'</b><small>'+esc(hm())+' · '+esc(body)+'</small>'+(extra||'');$('#feed').prepend(e);}
+
+const ST={wait:['En attente WhatsApp','wait'],ok:['Confirmée WhatsApp','ok'],call:['À appeler','call'],check:['À vérifier','bad'],cancel:['Annulée','bad'],fail:['Échec livraison','bad'],redel:['Relivraison demain','call'],ship:['Expédiée','ship'],done:['Livrée','ok'],mod:['Modifiée WhatsApp','ok']};
+function render(flashId){
+  const tb=$('#rows');tb.innerHTML='';
+  if(!orders.length){tb.innerHTML='<tr><td colspan="6" style="color:var(--muted)">Aucune commande pour l\'instant : lancez « Nouvelle commande ».</td></tr>';return;}
+  orders.slice().reverse().forEach(o=>{const tr=document.createElement('tr');if(o.id===flashId)tr.className='flash';const s=ST[o.st];
+    tr.innerHTML='<td>#'+o.id+'</td><td>'+esc(o.n)+'<br><small style="color:var(--muted)">'+esc(o.v)+'</small></td><td>'+esc(o.p)+(o.ar?'<br><small style="color:var(--muted)">'+esc(o.ar)+'</small>':'')+'</td><td>'+o.t+' MAD</td><td><span class="st '+s[1]+'">'+s[0]+'</span></td><td>'+(pack>=2?esc(o.pts):'—')+'</td>';tb.appendChild(tr);});
+}
+function newOrder(over){const c=CLIENTS[ci++%CLIENTS.length];const o=Object.assign({id:++seq,n:c.n,v:c.v,p:c.p,t:c.t,ar:c.ar,st:'wait',pts:Math.floor(c.t/10)+' en attente'},over||{});orders.push(o);k.orders++;kpi();render(o.id);return o;}
+function set(o,st,pts){o.st=st;if(pts!==undefined)o.pts=pts;render(o.id);}
+function confirmMsg(o){return '🌿 Bonjour '+o.n+' ! Merci pour ta commande chez Ma Boutique.\n\n🛍️ '+o.p+(o.ar?'\n🌸 Arômes : '+o.ar:'')+'\n💰 Total : '+o.t+' MAD (paiement à la livraison)\n📍 Livraison : '+o.v+(pack>=2?'\n🎁 +'+Math.floor(o.t/10)+' crédits fidélité après confirmation.':'')+'\n\nRéponds simplement :\n*1* ✅ pour CONFIRMER\n*2* ✏️ pour MODIFIER\n\nJawbna b *1* bach nsiftou lik l\'colis, wla *2* ila bghiti tbeddel chi haja.';}
+
+async function doConfirm(o){
+  await bubble('1','out');adv(1);
+  const pts=Math.floor(o.t/10);
+  set(o,'ok',pack>=2?pts+' crédités':'');k.auto++;k.calls++;if(pack>=2)k.points+=pts;kpi();
+  await bubble('✅ Merci '+o.n+' ! Ta commande #'+o.id+' est confirmée.\n🚚 On prépare ton colis, le livreur t\'appellera avant de passer.'+(pack>=2?'\n\n🎁 +'+pts+' points VIP ajoutés.':'')+'\n\nChoukran bzaf 🌿 Ma Boutique','in');
+  feed('sys2','Commande #'+o.id+' confirmée','Aucun appel nécessaire'+(pack>=2?' · '+pts+' points crédités':''));
+}
+async function doModify(o){
+  await bubble('2','out');adv(1);set(o,'call');
+  await bubble('✏️ Pas de souci '+o.n+' ! Écris-nous ce que tu veux changer (arôme, adresse, quantité…).\nKteb lina chno bghiti tbeddel, w ghadi n3aytou lik daba 📞','in');
+  feed('mail','📧 Email équipe : modification demandée','Commande #'+o.id+' · '+o.n+' · '+o.v+' · '+o.t+' MAD');
+}
+async function noReply(o,second){
+  sys('Le client ne répond pas…');await wait(700);
+  const h=Math.floor(mins/60);
+  if(!second&&(h>=20)){sys('Il est tard : la relance attend 9 h (jamais la nuit).');mins=9*60+1;day++;clock();}else{adv(120);sys('+2 h');}
+  if(!second){
+    await bubble('👋 Salam '+o.n+', petit rappel : ta commande #'+o.id+' ('+o.t+' MAD) attend ta confirmation.\nRéponds *1* pour confirmer ou *2* pour modifier.','in');
+    feed('sys2','Relance envoyée','Commande #'+o.id+' · une seule relance');
+    const r=await ask([{l:'Répondre 1',v:1},{l:'Répondre 2',v:2},{l:'Ne pas répondre',v:0}]);
+    if(r===1)return doConfirm(o);if(r===2)return doModify(o);return noReply(o,true);
+  }
+  set(o,'call');sys('Toujours pas de réponse : la commande passe à l\'équipe.');
+  feed('mail','📧 Email équipe : client à appeler','Commande #'+o.id+' · '+o.n+' · pas de réponse après relance');
+}
+
+const RUN={
+ async new(){
+  clearChat();const o=newOrder();
+  feed('sys2','Nouvelle commande #'+o.id,'Enregistrée · numéro normalisé +212 6… · pas de doublon');
+  sys('Commande #'+o.id+' reçue de Shopify');await bubble(confirmMsg(o),'in');
+  const r=await ask([{l:'Répondre 1',v:1},{l:'Répondre 2',v:2},{l:'Ne pas répondre',v:0}]);
+  if(r===1)await doConfirm(o);else if(r===2)await doModify(o);else await noReply(o,false);
+ },
+ async fraud(){
+  clearChat();
+  const r=await ask([{l:'Client avec 2 retours passés',v:'ret'},{l:'Numéro de téléphone faux',v:'num'}]);
+  if(r==='ret'){const o=newOrder({n:'Mehdi',v:'Meknès',p:'Pack 3 sprays',t:229,ar:'SPRAY 1: OUD'});set(o,'check');
+    sys('Commande #'+o.id+' reçue');sys('Filtre : ce numéro a 2 colis retournés sur ses 3 dernières commandes.');
+    feed('mail','⚠️ Commande à vérifier avant expédition','#'+o.id+' · Mehdi · 2 retours sur 3 commandes · appeler avant d\'envoyer');
+  }else{const o=newOrder({n:'Client',v:'Salé',p:'Huile à brûler',t:149,ar:''});set(o,'call');
+    sys('Commande #'+o.id+' reçue · numéro « 06 12 »');sys('Numéro invalide : pas de WhatsApp possible.');
+    feed('mail','📞 Numéro invalide','#'+o.id+' · aucun message envoyé · à appeler ou annuler');}
+ },
+ async fail(){
+  clearChat();let o=orders.find(x=>x.st==='ok'||x.st==='ship');
+  if(!o){o=newOrder();set(o,'ok',pack>=2?Math.floor(o.t/10)+' crédités':'');sys('Commande #'+o.id+' confirmée hier');}
+  adv(30);set(o,'fail');sys('Le livreur signale : client injoignable');
+  await bubble('🚚 Salam '+o.n+', le livreur n\'a pas pu te joindre pour ta commande #'+o.id+'.\nQuand veux-tu être livré ?\n*1* Demain\n*2* Après-demain\n*3* Changer d\'adresse','in');
+  const r=await ask([{l:'1 · Demain',v:1},{l:'2 · Après-demain',v:2},{l:'3 · Changer d\'adresse',v:3}]);
+  await bubble(String(r),'out');
+  if(r===3){set(o,'call');await bubble('📍 D\'accord ! Écris ta nouvelle adresse ici, l\'équipe la valide.','in');feed('mail','📧 Nouvelle adresse à valider','#'+o.id+' · '+o.n);}
+  else{set(o,'redel');await bubble('✅ C\'est noté, le livreur repasse '+(r===1?'demain':'après-demain')+'. Merci '+o.n+' 🌿','in');feed('rep','Colis sauvé : relivraison planifiée','#'+o.id+' · '+(r===1?'demain':'après-demain')+' · un retour évité');}
+ },
+ async report(){
+  const total=orders.length,ok=orders.filter(o=>o.st==='ok'||o.st==='done'||o.st==='mod').length,call=orders.filter(o=>o.st==='call'||o.st==='check').length,fail=orders.filter(o=>o.st==='fail').length,ca=orders.filter(o=>['ok','done','mod','ship','redel'].includes(o.st)).reduce((a,o)=>a+o.t,0);
+  $('#report').innerHTML='<div class="ev rep"><b>📊 Rapport · '+esc($('#clock').textContent.split(' ')[0])+' 9:00</b><dl class="ai-box"><dt>Commandes</dt><dd>'+total+'</dd><dt>Confirmées</dt><dd>'+ok+'</dd><dt>À appeler</dt><dd>'+call+'</dd><dt>Livraisons échouées</dt><dd>'+fail+'</dd><dt>Montant confirmé</dt><dd>'+ca+' MAD</dd></dl><small>Calculé sur les commandes de la démo.</small></div>';
+  feed('sys2','Rapport du matin envoyé','WhatsApp + email au gérant');
+ },
+ async darija(){
+  clearChat();let o=orders.find(x=>x.st==='wait'&&x.ar);if(!o){o=newOrder({n:'Sara',v:'Casablanca',p:'Coffret parfum d\'ambiance',t:249,ar:'DIFFUSEUR: FLEUR D ORANGER'});await bubble(confirmMsg(o),'in');}
+  const r=await ask([{l:'« bghit nbeddel l\'arôme l OUD »',v:'clear'},{l:'« wach kayn chi promo ? »',v:'vague'}]);
+  if(r==='clear'){await bubble('Salam, bghit nbeddel l\'arôme l OUD 🙏','out');
+    feed('ai','🤖 IA : demande comprise','#'+o.id,'<dl class="ai-box"><dt>Intention</dt><dd>Changer l\'arôme</dd><dt>Confiance</dt><dd>Haute</dd><dt>Donnée vérifiable</dt><dd>OUD existe au catalogue ✓</dd><dt>Décision</dt><dd>Mise à jour automatique</dd></dl>');
+    await wait(500);o.ar=o.ar.replace(/:\s*[^|]+/, ': OUD');set(o,'mod',pack>=2?Math.floor(o.t/10)+' crédités':'');k.auto++;k.calls++;if(pack>=2)k.points+=Math.floor(o.t/10);kpi();
+    await bubble('✅ C\'est noté '+o.n+' ! Ta commande #'+o.id+' est mise à jour avec l\'arôme OUD.\nSafi, tbeddlat lik la commande 🌿','in');
+  }else{await bubble('wach kayn chi promo ?','out');
+    feed('ai','🤖 IA : doute, passage à un humain','#'+o.id,'<dl class="ai-box"><dt>Intention</dt><dd>Question générale</dd><dt>Confiance</dt><dd>Moyenne</dd><dt>Décision</dt><dd>Aucune modification · email équipe</dd></dl>');
+    set(o,'call');await bubble('🌿 Merci pour ton message ! Un conseiller t\'appelle très vite pour tout valider avec toi.','in');}
+ },
+ async track(){
+  clearChat();let o=orders.find(x=>x.st==='ok'||x.st==='mod'||x.st==='redel');
+  if(!o){o=newOrder();set(o,'ok',pack>=2?Math.floor(o.t/10)+' crédités':'');sys('Commande #'+o.id+' confirmée');}
+  adv(60);set(o,'ship');await bubble('📦 '+o.n+', ta commande #'+o.id+' part aujourd\'hui ! Le livreur t\'appelle avant de passer.','in');
+  sys('Le lendemain');adv(60*20);await bubble('🚚 Le livreur passe aujourd\'hui à '+o.v+'. Prépare '+o.t+' MAD en espèces 🙏','in');
+  await wait(600);set(o,'done');feed('rep','Commande livrée et encaissée','#'+o.id+' · '+o.t+' MAD');
+  sys('3 jours plus tard');adv(60*24*3);
+  await bubble('🌟 Salam '+o.n+', ça te plaît ? Laisse-nous un avis en 1 clic, on t\'offre +10 points.','in');
+  const r=await ask([{l:'⭐⭐⭐⭐⭐ Laisser un avis',v:1},{l:'Ignorer',v:0}]);
+  if(r){await bubble('⭐⭐⭐⭐⭐ Très bonne odeur, livraison rapide !','out');k.points+=10;kpi();feed('rep','Nouvel avis client','5 étoiles · +10 points');}
+ }
+};
+
+function drawScenarios(){
+  const box=$('#scenarios');box.innerHTML='';
+  SCN.forEach(s=>{const b=document.createElement('button');b.id='s-'+s.id;const locked=s.pack>pack;b.disabled=locked||busy;
+    b.innerHTML='<strong>'+esc(s.t)+'</strong><span style="font-size:13px;color:var(--muted)">'+esc(s.d)+'</span><span class="meta"><span class="tag '+(s.pack===2?'c':s.pack===3?'p':'')+'">'+PACK_NAME[s.pack]+'</span>'+(s.soon?'<span class="soon">en lancement</span>':'')+(locked?'<span class="lock">· inclus dans '+PACK_NAME[s.pack]+'</span>':'')+'</span>';
+    b.addEventListener('click',async()=>{if(busy)return;busy=true;drawScenarios();try{await RUN[s.id]();}finally{busy=false;drawScenarios();}});
+    box.appendChild(b);});
+}
+function setPack(p){pack=p;document.querySelectorAll('.packs button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.pack===p)));drawScenarios();render();}
+document.querySelectorAll('.packs button').forEach(b=>b.addEventListener('click',()=>{if(!busy)setPack(+b.dataset.pack);}));
+$('#reset').addEventListener('click',()=>{if(busy)return;orders=[];seq=1046;ci=0;k={orders:0,auto:0,calls:0,points:0};mins=14*60+32;day=0;clock();kpi();render();$('#feed').innerHTML='';$('#report').innerHTML='<p class="hint">Lancez le scénario « Rapport du matin ».</p>';$('#chat').innerHTML='<p class="empty">Lancez un scénario à gauche : le message du client apparaît ici.</p>';hideReply();});
+
+/* example state so the first frame shows a working shop */
+function seed(){
+  [['Youssef','Rabat','Diffuseur + 2 sprays',299,'DIFFUSEUR: AMBER | SPRAY 1: VANILLE','ok','29 crédités'],['Nadia','Tanger','Huile à brûler',149,'','call','14 en attente']].forEach(a=>{orders.push({id:++seq,n:a[0],v:a[1],p:a[2],t:a[3],ar:a[4],st:a[5],pts:a[6]});});
+  ci=3;k={orders:2,auto:1,calls:1,points:29};
+  feed('sys2','Commande #1047 confirmée','Exemple · aucun appel nécessaire · 29 points crédités');
+  feed('mail','📧 Email équipe : client à appeler','Exemple · #1048 · Nadia · pas de réponse après relance');
+}
+seed();clock();kpi();render();drawScenarios();
+
+/* gains calculator */
+function gains(){const o=+$('#g-orders').value,m=+$('#g-min').value,s=+$('#g-share').value/100;$('#o-orders').textContent=o;$('#o-min').textContent=String(m).replace('.',',');$('#o-share').textContent=Math.round(s*100)+' %';const calls=Math.round(o*30*s);$('#r-calls').textContent=calls.toLocaleString('fr-FR');$('#r-hours').textContent=Math.round(calls*m/60).toLocaleString('fr-FR')+' h';}
+['#g-orders','#g-min','#g-share'].forEach(id=>$(id).addEventListener('input',gains));gains();
+})();
+</script>
+
+</body>
+</html>
